@@ -8,15 +8,12 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String?  @unique
-  phone        String?  @unique
-  passwordHash String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   roles         UserRole[]
-  oauthAccounts OAuthAccount[]
   refreshTokens RefreshToken[]
 }
 
@@ -29,20 +26,6 @@ model UserRole {
 
   @@id([userId, role])
   @@index([role])
-}
-
-model OAuthAccount {
-  id                String        @id @default(cuid())
-  userId            String
-  provider          OAuthProvider
-  providerAccountId String
-  email             String?
-  createdAt         DateTime      @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-  @@index([userId])
 }
 
 model RefreshToken {
@@ -59,9 +42,18 @@ model RefreshToken {
   @@index([expiresAt])
 }
 
-enum OAuthProvider {
-  google
-  linkedin
+model PhoneOtp {
+  id         String    @id @default(cuid())
+  phone      String
+  codeHash   String
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime
+  consumedAt DateTime?
+  attempts   Int       @default(0)
+
+  @@index([phone, expiresAt])
+  @@index([phone, consumedAt])
+  @@index([expiresAt])
 }
 
 enum RoleName {

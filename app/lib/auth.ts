@@ -9,12 +9,11 @@ export const SELF_SELECTABLE_ROLE_NAMES = ["Job_finder", "Recruiter"] as const;
 export type SelfSelectableRoleName =
   (typeof SELF_SELECTABLE_ROLE_NAMES)[number];
 
-export function normalizeEmail(input: unknown): string | undefined {
-  if (typeof input !== "string") return undefined;
-  const value = input.trim().toLowerCase();
-  return value.length > 0 ? value : undefined;
-}
 
+/**
+ * @deprecated Phone normalization is handled at the API layer.
+ * This function is kept for backward compatibility.
+ */
 export function normalizePhone(input: unknown): string | undefined {
   if (typeof input !== "string") return undefined;
   const value = input.trim();
@@ -137,6 +136,12 @@ export async function issueTokensForUser(userId: string): Promise<{
 
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_TTL_DAYS);
+
+  // Single-device sessions: revoke any existing active refresh tokens
+  await prisma.refreshToken.updateMany({
+    where: { userId, revokedAt: null },
+    data: { revokedAt: new Date() },
+  });
 
   await prisma.refreshToken.create({
     data: {
