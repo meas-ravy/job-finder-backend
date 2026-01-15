@@ -16,7 +16,14 @@ export async function POST(request: Request) {
       );
     }
 
-    await revokeRefreshToken(refreshToken);
+    const revoked = await revokeRefreshToken(refreshToken);
+    if (!revoked) {
+      return NextResponse.json(
+        { error: "Invalid or expired refresh token" },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.json({ sucess: true, message: "logout successfully" });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

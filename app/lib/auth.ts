@@ -179,10 +179,13 @@ export async function rotateRefreshToken(refreshToken: string): Promise<{
   return issueTokensForUser(existing.userId);
 }
 
-export async function revokeRefreshToken(refreshToken: string): Promise<void> {
+export async function revokeRefreshToken(
+  refreshToken: string
+): Promise<boolean> {
   const tokenHash = sha256Base64Url(refreshToken);
-  await prisma.refreshToken.updateMany({
+  const result = await prisma.refreshToken.updateMany({
     where: { tokenHash, revokedAt: null },
     data: { revokedAt: new Date() },
   });
+  return result.count > 0;
 }

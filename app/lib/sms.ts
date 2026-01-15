@@ -1,56 +1,48 @@
 // config PlasGate for send-otp
 
-export async function sendOTP(phone: string, otp: string): Promise<void> {
+export async function sendOTP(phone: string, otp: string): Promise<string> {
   const isProduction = process.env.NODE_ENV === "production";
   const plasgatePrivateKey = process.env.PLASGATE_PRIVATE_KEY;
   const plasgateSecret = process.env.PLASGATE_SECRET;
   const plasgateSender = process.env.PLASGATE_SENDER;
-  const plasgateBaseUrl =
-    process.env.PLASGATE_BASE_URL || "https://cloudapi.plasgate.com";
-  const usePlasGate = !!(
-    plasgatePrivateKey &&
-    plasgateSecret &&
-    plasgateSender
-  );
+  const plasgateBaseUrl = "https://cloudapi.plasgate.com";
 
-  if (usePlasGate) {
-    const url = `${plasgateBaseUrl}/rest/send?private_key=${encodeURIComponent(
-      plasgatePrivateKey
-    )}`;
-    const to = phone.replace(/[^\d]/g, "");
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "X-Secret": plasgateSecret,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        sender: plasgateSender,
-        to,
-        content: `Your Jobber verification code is: ${otp}. Valid for 5 minutes.`,
-      }),
-    });
-
-    if (!response.ok) {
-      const message = await response.text().catch(() => response.statusText);
-      throw new Error(`PlasGate SMS failed (${response.status}): ${message}`);
-    }
-
-    return;
+  if (!plasgatePrivateKey || !plasgateSecret || !plasgateSender) {
+    throw new Error(
+      "Missing PlasGate SMS config (PLASGATE_PRIVATE_KEY, PLASGATE_SECRET, PLASGATE_SENDER)."
+    );
   }
 
-  if (isProduction) {
-    console.warn("[SMS] No SMS provider configured for production.");
-    return;
+  const url = `${plasgateBaseUrl}/rest/send?private_key=${encodeURIComponent(
+    plasgatePrivateKey
+  )}`;
+  const to = phone.replace(/[^\d]/g, "");
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "X-Secret": plasgateSecret,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      sender: plasgateSender,
+      to,
+      content: `Your Jober verification code is: ${otp}. Valid for 5 minutes.`,
+    }),
+  });
+
+  const responseBody = await response.text().catch(() => "");
+  // if (!isProduction && responseBody) {
+  //   console.log(`[PlasGate] /rest/send response: ${responseBody}`);
+  // }
+
+  if (!response.ok) {
+    throw new Error(
+      `PlasGate SMS failed (${response.status}): ${
+        responseBody || response.statusText
+      }`
+    );
   }
 
-  {
-    // Development: Log to console
-    console.log("=".repeat(50));
-    console.log(`📱 SMS OTP for ${phone}:`);
-    console.log(`   Code: ${otp}`);
-    console.log(`   Valid for 5 minutes`);
-    console.log("=".repeat(50));
-  }
+  return responseBody;
 }

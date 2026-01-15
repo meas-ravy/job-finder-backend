@@ -6,11 +6,11 @@ const MAX_OTP_ATTEMPTS = 3;
 const MAX_OTP_REQUESTS_PER_HOUR = 3;
 
 /**
- * Generate a random 6-digit OTP
+ * Generate a random 4-digit OTP
  */
 export function generateOTP(): string {
-  const min = 100000;
-  const max = 999999;
+  const min = 1000;
+  const max = 9999;
   return Math.floor(Math.random() * (max - min + 1) + min).toString();
 }
 

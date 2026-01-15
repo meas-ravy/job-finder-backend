@@ -75,6 +75,10 @@ export async function POST(request: Request) {
       });
     }
 
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     // Issue tokens
     const tokens = await issueTokensForUser(user.id);
 

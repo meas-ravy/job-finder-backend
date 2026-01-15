@@ -22,9 +22,17 @@ export async function POST(request: Request) {
       );
     }
 
+    const normalizedPhone = phone.trim();
+    if (normalizedPhone.length === 0) {
+      return NextResponse.json(
+        { error: "Phone number is required" },
+        { status: 400 }
+      );
+    }
+
     // Create and send OTP
-    const otp = await createOTP(phone.trim());
-    await sendOTP(phone.trim(), otp);
+    const otp = await createOTP(normalizedPhone);
+    const providerResponse = await sendOTP(normalizedPhone, otp);
 
     // Don't return OTP in production - only for development
     const isDevelopment = process.env.NODE_ENV !== "production";
